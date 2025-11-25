@@ -30,14 +30,15 @@ sol_res = CA.solve_atmos!(simulation) # run the simulation
 ## Externally-Driven Single Column Models
 Currently three versions of the externally driven single column model, `GCM` driven, `ReanalysisTimeVarying` driven, and `ReanalysisMonthlyAveragedDiurnal` driven are supported in `ClimaAtmos.jl`. Externally-driven means that the model is initialized and forced with data coming from a different simulation. This differs from setups like, for example, BOMEX or SOARES which have steady forcing and low domain tops (~4km) or functional forcing, respectively. They have been developed specifically for the purpose of model calibration by recreating statistics that are close to either LES, for the `GCM` driven case only, or to observations.
 
-### Shipway & Hill (2012) Kinematic Warm-Rain Cas
+### Shipway & Hill (2012) Kinematic Warm-Rain Case
+
 ClimaAtmos provides an externally forced single-column configuration based on
-the warm-rain intercomparison of **Shipway & Hill (2012)**. This “kinematic”
+the warm-rain intercomparison of **Shipway & Hill (2012)**. This *kinematic*
 setup prescribes the large-scale dynamics so that only microphysics evolves
 prognostically. It is designed to test warm-rain parameterizations in a clean
 environment without dynamical feedbacks.
 
-The case follows the original KiD framework:
+The case follows the original *Kinematic Driver (KiD)* framework:
 
 - **Vertical velocity** is prescribed as a time-varying profile (typically
   sinusoidal).
@@ -45,18 +46,55 @@ The case follows the original KiD framework:
 - A **time-dependent flux of total water (`q_tot`)** is applied at the boundary
   to moisten or dry the column.
 - Momentum and thermodynamic equations are **not** solved prognostically; the
-  model state is overwritten each step.
+  model state is overwritten each step to match the prescribed forcing.
 
-ClimaAtmos uses `CloudMicrophysics.jl` to compute microphysical tendencies,
-allowing direct comparison of 1M and other schemes with results obtained from
-the standalone `KinematicDriver.jl` implementation.
+#### Governing Equations
+
+The only prognostic evolution in the SH12 setup is for the moist-physics
+scalars. The key variable is the **total water mixing ratio**,
+
+\[
+q_{\text{tot}} = q_v + q_c + q_r,
+\]
+
+which evolves according to a 1D advection equation with a prescribed vertical
+velocity:
+
+\[
+\frac{\partial q_{\text{tot}}}{\partial t}
+= -\, w(t,z)\,\frac{\partial q_{\text{tot}}}{\partial z}
++ S_{q_{\text{tot}}}(t).
+\]
+
+Here \(w(t,z)\) is the imposed kinematic velocity profile, and
+\(S_{q_{\text{tot}}}(t)\) represents the external moistening/drying. This
+forcing enters through a **time-varying lower boundary flux** of total water:
+
+\[
+\left.
+w\,q_{\text{tot}}
+-\,
+K\,\frac{\partial q_{\text{tot}}}{\partial z}
+\right|_{z = z_b}
+=
+F_{q_{\text{tot}}}(t),
+\]
+
+where \(F_{q_{\text{tot}}}(t)\) controls the periodic moistening and drying that
+drives cloud formation and decay in the original SH12 experiment.
+
+ClimaAtmos uses `CloudMicrophysics.jl` to compute warm-rain tendencies
+(autoconversion, accretion, evaporation, and sedimentation), enabling direct
+comparison with results from the standalone `KinematicDriver.jl` reference
+implementation.
 
 This case is useful for:
 
 - validating warm-rain microphysics against a standard benchmark,
-- comparing ClimaAtmos microphysics with KiD,
-- isolating autoconversion, accretion, evaporation, and sedimentation behavior
-  under identical forcing.
+- comparing ClimaAtmos microphysics directly with KiD,
+- isolating individual microphysical processes under identical, prescribed
+  forcing.
+
 
 
 ### GCM-Driven Case
