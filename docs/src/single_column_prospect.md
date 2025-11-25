@@ -30,6 +30,12 @@ sol_res = CA.solve_atmos!(simulation) # run the simulation
 ## Externally-Driven Single Column Models
 Currently three versions of the externally driven single column model, `GCM` driven, `ReanalysisTimeVarying` driven, and `ReanalysisMonthlyAveragedDiurnal` driven are supported in `ClimaAtmos.jl`. Externally-driven means that the model is initialized and forced with data coming from a different simulation. This differs from setups like, for example, BOMEX or SOARES which have steady forcing and low domain tops (~4km) or functional forcing, respectively. They have been developed specifically for the purpose of model calibration by recreating statistics that are close to either LES, for the `GCM` driven case only, or to observations.
 
+### Shipway & Hill (2012) kinematic warm-rain case
+
+Atmos supports a single-column, externally forced configuration based on the warm-rain microphysics intercomparison of Shipway & Hill (2012). This case follows the Kinematic Driver (KiD) framework, where the vertical motion and thermodynamic forcing are prescribed rather than prognostic. The purpose is to isolate microphysical tendencies—autoconversion, accretion, evaporation, and sedimentation, from dynamical feedbacks.
+
+In the original Shipway & Hill setup, a shallow warm cloud 
+
 ### GCM-Driven Case
 For the `GCM` driven case we can run the experiment using the config file `config/model_configs/prognostic_edmfx_gcmdriven_column.yml` by running:
 ```bash
@@ -98,3 +104,28 @@ To run the simulation on a local machine you will need to first download the rea
 a1a465e8d237d78bef1e6d346054da395787a9f9 = "/some/random/path/processed_files" # for storing
 ```
 Good luck! :wink:
+
+## Shipway & Hill (2012) Kinematic Warm-Rain Case
+
+Atmos supports a single-column, externally forced configuration based on the
+warm-rain microphysics intercomparison of Shipway & Hill (2012). This case
+follows the Kinematic Driver (KiD) framework, where the vertical motion and
+thermodynamic forcing are prescribed rather than prognostic. The purpose is to
+isolate microphysical tendencies—autoconversion, accretion, evaporation, and
+sedimentation—from dynamical feedbacks.
+
+In the original Shipway & Hill setup, a shallow warm cloud forms in response to
+a prescribed sinusoidal updraft and moisture stratification. Temperature is
+held fixed, and total water or water vapor is forced to maintain the cloud
+layer. This creates a controlled environment for comparing microphysics schemes.
+
+The ClimaAtmos implementation mirrors this design by overriding the dynamical
+state with the prescribed forcing and by using `CloudMicrophysics.jl` for the
+microphysical tendencies. This ensures consistency with the standalone
+`KinematicDriver.jl` implementation.
+
+This case is particularly useful for:
+
+- testing warm-rain microphysics,
+- intercomparison of 1M, 2M, and bin microphysical schemes,
+- validating ClimaAtmos microphysics against KiD.
